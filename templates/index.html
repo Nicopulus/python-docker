@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chart</title>
+    <!-- Load ECharts library -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <style>
+        /* Basic styling for table */
+        button {
+            background: #4CAF50;
+            border: none;
+            padding: 15px 30px;
+            cursor: pointer;
+            font-family: Arial;
+            font-size: 15px;
+            color: white;
+        }
+        table {
+            width: 30%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            font-size: 15px;
+            font-family: Arial;
+        }
+        th, td {
+            padding: 5px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        /* Style for the chart container */
+        #chart {
+            width: 100%;
+            height: 500px;
+        }
+        h1 {
+            font-family: 'Arial', sans-serif;
+            font-size: 2.5rem;
+            color: #4CAF50; /*#3384ef;*/
+            text-align: left;
+            padding: 0px;
+        }
+        .fas {
+            margin-right: 0px;
+            color: #3384ef;  /* Match icon color with the text */
+        }
+    </style>
+</head>
+<body>
+    <h1><i class="fas fa-chart-line"></i>Real-Time Data</h1>
+    <button onclick="fetchData()">Refresh Table/Graph</button>
+    <!-- Table container -->
+    <table>
+        <thead>
+            <tr>
+                <th>X Value</th>
+                <th>Y Value</th>
+            </tr>
+        </thead>
+        <tbody id="data-table">
+            <!-- Table rows will be dynamically updated here -->
+            {% for xi, yi in zip(x, y) %}
+            <tr>
+                <td>{{ xi }}</td>
+                <td>{{ yi }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button onclick="put_data_into_the_table()">Refresh Table Only</button>
+    <!-- Chart container -->
+    <div id="chart"></div>
+    <script>
+        // Initialize ECharts instance on the #chart div
+        var chart = echarts.init(document.getElementById('chart'));
+
+        // Chart configuration object
+        var chartOptions = {
+            title: {
+                text: 'Random Data Plot',
+            },
+            xAxis: {
+                name: '\n\nRandom X-Data',
+                nameLocation: 'center',
+                type: 'category',
+                data: []  // x-axis data will be updated
+            },
+            yAxis: {
+                name: 'Random Y-Data\n\n',
+                nameLocation: 'center',
+                type: 'value'
+            },
+            series: [{
+                data: [],  // y-axis data will be updated
+                type: 'line'
+            }]
+        };
+
+        // Set initial options for the chart
+        chart.setOption(chartOptions);
+
+        // Function to fetch random data from the Flask backend
+        function fetchData() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    // Update the chart with new data
+                    chart.setOption({
+                        xAxis: {
+                            data: data.x  // x-axis data from server
+                        },
+                        series: [{
+                            data: data.y  // y-axis data from server
+                        }]
+                    });
+                    // Update the table with new data
+                    const tableBody = document.getElementById('data-table');
+                    tableBody.innerHTML = '';  // Clear existing row
+                    
+                    // Add new rows to the table
+                    for (let i = 0; i < data.x.length; i++) {
+                        const row = document.createElement('tr');
+                        const xCell = document.createElement('td');
+                        const yCell = document.createElement('td');
+                        xCell.textContent = data.x[i];
+                        yCell.textContent = data.y[i];
+                        row.appendChild(xCell);
+                        row.appendChild(yCell);
+                        tableBody.appendChild(row);
+                    }
+                });
+        }
+
+        function put_data_into_the_table() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+
+                const tableBody = document.getElementById('data-table'); //Setting object to update
+                tableBody.innerHTML = '';  // Clear existing rows
+
+                // Add new rows to the table
+                for (let i = 0; i < data.x.length; i++) {
+                    const row = document.createElement('tr');
+                    const xCell = document.createElement('td');
+                    const yCell = document.createElement('td');
+                    xCell.textContent = data.x[i];
+                    yCell.textContent = data.y[i];
+                    row.appendChild(xCell);
+                    row.appendChild(yCell);
+                    tableBody.appendChild(row);
+                }
+            });
+        }
+        
+        function put_data_into_the_graph(){
+            fetch('/data')
+            .then(response => response.json())
+            .then(data => {
+                // Update the chart with new data
+                chart.setOption({
+                    xAxis: {
+                        data: data.x  // x-axis data from server
+                    },
+                    series: [{
+                        data: data.y  // y-axis data from server
+                    }]
+                });
+            });
+        }
+
+        //function to call a put the data on table and graph
+        window.onload = fetchData();
+        //function (){
+            // Fetch data just one time
+            //fetchData();
+            // Fetch data every second and update the chart
+            //setInterval(fetchData, 2000);
+        //};
+
+    </script>
+    <button onclick="put_data_into_the_graph()">Refresh Graph Only</button>
+</body>
+</html>
